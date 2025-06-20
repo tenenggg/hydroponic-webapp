@@ -12,7 +12,7 @@ function Dashboard() {
     setUserRole(role);
   }, []);
 
-  // Sidebar navigation items (no branding, no role info)
+  // Sidebar navigation items (no branding, no role info) yessir
   const navItems = [
     { label: 'Home', icon: <FaHome size={24} color="white" />, onClick: () => navigate('/') },
     { label: 'View Data', icon: <FaLeaf size={24} color="white" />, onClick: () => navigate('/view-data') },
