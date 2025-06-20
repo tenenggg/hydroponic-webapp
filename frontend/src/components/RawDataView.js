@@ -80,6 +80,29 @@ function RawDataView() {
     setCurrentPage(newPage);
   };
 
+  const handleDelete = async (rowId) => {
+    if (!window.confirm('Are you sure you want to delete this row? This action is permanent.')) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('sensor_data')
+        .delete()
+        .eq('id', rowId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh the data after successful deletion
+      getSelectedPlantData();
+    } catch (error) {
+      console.error('Error deleting data:', error);
+      alert(`Failed to delete data: ${error.message}`);
+    }
+  };
+
   return (
     <Layout>
       <div className="p-8">
@@ -111,6 +134,7 @@ function RawDataView() {
                       <th className="px-4 py-2 text-left">Temperature (°C)</th>
                       <th className="px-4 py-2 text-left">pH</th>
                       <th className="px-4 py-2 text-left">EC (mS/cm)</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -120,6 +144,14 @@ function RawDataView() {
                         <td className="px-4 py-2">{data.water_temperature.toFixed(2)}</td>
                         <td className="px-4 py-2">{data.ph.toFixed(2)}</td>
                         <td className="px-4 py-2">{data.ec.toFixed(2)}</td>
+                        <td className="px-4 py-2">
+                          <button
+                            onClick={() => handleDelete(data.id)}
+                            className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
