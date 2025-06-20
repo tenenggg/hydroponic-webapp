@@ -9,11 +9,11 @@ const fs = require('fs');
 const app = express();
 
 // Enhanced CORS configuration
-// ... existing code ...
 app.use(cors({
   origin: 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app', // Allow requests from your deployed frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-// ... existing code ...
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
@@ -220,7 +220,7 @@ app.post('/webhook', (req, res) => {
 // Function to set webhook
 async function setWebhook() {
   try {
-    const webhookUrl = `${process.env.RENDER_EXTERNAL_URL || 'https://your-backend-xyz.ondigitalocean.app'}/webhook`;
+    const webhookUrl = `https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend/webhook`;
     await bot.setWebHook(webhookUrl);
     console.log('✅ Webhook set successfully:', webhookUrl);
   } catch (error) {
