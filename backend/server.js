@@ -9,11 +9,11 @@ const fs = require('fs');
 const app = express();
 
 // Enhanced CORS configuration
+// ... existing code ...
 app.use(cors({
-  origin: '*', // TODO: For production, replace '*' with your frontend App Platform URL, e.g., 'https://your-frontend-xyz.ondigitalocean.app'
+  origin: 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app', // Allow requests from your deployed frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// ... existing code ...
 
 app.use(express.json());
 
