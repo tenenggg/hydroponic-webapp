@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import Layout from './Layout';
 
-const BACKEND_URL = 'https://your-backend-xyz.ondigitalocean.app'; // TODO: Replace with your actual backend URL after deployment
+const BACKEND_URL = 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend';
 
 function ManagePlants() {
   const [plants, setPlants] = useState([]);
