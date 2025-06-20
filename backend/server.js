@@ -228,9 +228,6 @@ async function setWebhook() {
   }
 }
 
-// Set webhook when server starts
-setWebhook();
-
 // User CRUD Operations
 // Create user
 app.post('/api/users', async (req, res) => {
