@@ -1,0 +1,444 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
+const TelegramBot = require('node-telegram-bot-api');
+const https = require('https');
+const fs = require('fs');
+
+const app = express();
+
+// Enhanced CORS configuration
+app.use(cors({
+  origin: '*', // TODO: For production, replace '*' with your frontend App Platform URL, e.g., 'https://your-frontend-xyz.ondigitalocean.app'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Initialize Supabase client with error handling
+let supabase;
+try {
+  supabase = createClient(
+    process.env.REACT_APP_SUPABASE_URL,
+    process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.log('✅ Supabase client initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize Supabase client:', error);
+}
+
+// Initialize Telegram Bot without polling
+let bot;
+if (process.env.TELEGRAM_BOT_TOKEN) {
+  try {
+    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+    console.log('✅ Telegram bot initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Telegram bot:', error);
+  }
+}
+
+// Add cleanup on server shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Cleaning up...');
+  if (bot) {
+    bot.stopPolling();
+    console.log('Telegram bot polling stopped');
+  }
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Cleaning up...');
+  if (bot) {
+    bot.stopPolling();
+    console.log('Telegram bot polling stopped');
+  }
+  process.exit(0);
+});
+
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+let lastSeenId = null;
+
+// Function to check sensor data and send notifications (adapted for real-time)
+async function sendSensorAlerts(row) {
+  try {
+    // Ensure we only process new data (simple check for now, can be improved with event types)
+    if (row.id === lastSeenId) {
+      return;
+    }
+    lastSeenId = row.id;
+
+    // Skip if no pump is triggered
+    if (!row.pump1 && !row.pump2 && !row.pump3 && !row.pump4) {
+      return;
+    }
+
+    // Get selected plant ID from system_config
+    const { data: configData, error: configError } = await supabase
+      .from('system_config')
+      .select('selected_plant_id')
+      .limit(1)
+      .single();
+
+    if (configError || !configData?.selected_plant_id) {
+      console.warn('⚠️ Could not fetch selected plant ID for alert:', configError);
+      return;
+    }
+
+    const plantId = configData.selected_plant_id;
+
+    // Get plant name from plant_profiles
+    let plantName = 'Unknown Plant';
+    const { data: plantData, error: plantError } = await supabase
+      .from('plant_profiles')
+      .select('name')
+      .eq('id', plantId)
+      .single();
+
+    if (!plantError && plantData) {
+      plantName = plantData.name;
+    }
+
+    // Build and send message
+    let message = '';
+
+    if (row.pump1) {
+      message += `⚠️ EC too low! Add Solution A+B.\n🚰 Pump 1 activated\n📊 EC: ${row.ec}\n🌱 Plant: ${plantName}\n\n`;
+    }
+    if (row.pump2) {
+      message += `⚠️ EC too high! Add water.\n🚰 Pump 2 activated\n📊 EC: ${row.ec}\n🌱 Plant: ${plantName}\n\n`;
+    }
+    if (row.pump3) {
+      message += `⚠️ pH too low! Add alkali.\n🚰 Pump 3 activated\n📊 pH: ${row.ph}\n🌱 Plant: ${plantName}\n\n`;
+    }
+    if (row.pump4) {
+      message += `⚠️ pH too high! Add acid.\n🚰 Pump 4 activated\n📊 pH: ${row.ph}\n🌱 Plant: ${plantName}\n\n`;
+    }
+
+    if (message) {
+      await bot.sendMessage(TELEGRAM_CHAT_ID, message);
+      console.log('✅ Alert sent!', row);
+    }
+
+  } catch (err) {
+    console.error('❌ Unexpected error during sensor alert:', err);
+  }
+}
+
+// Supabase Realtime Subscription for sensor_data
+if (supabase) {
+  supabase
+    .channel('sensor_data_changes')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'sensor_data' },
+      (payload) => {
+        console.log('Realtime change received:', payload);
+        sendSensorAlerts(payload.new);
+      }
+    )
+    .subscribe();
+  console.log('✅ Subscribed to sensor_data changes.');
+}
+
+// Telegram Bot Commands
+bot.onText(/\/start/, (msg) => {
+  bot.sendMessage(msg.chat.id, "Welcome to Hydroponic Monitoring Bot! This bot can show you the current values of Electrical Conductivity (EC), pH Level, Water Temperature and will send you alerts when any of the pump is activated. Oh, and it can also show you the optimised level for all plant profiles.");
+});
+
+bot.onText(/\/ph/, async (msg) => {
+  const { data, error } = await supabase
+    .from('sensor_data')
+    .select('ph')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error || !data || data.length === 0) {
+    bot.sendMessage(msg.chat.id, "Could not fetch pH value.");
+  } else {
+    bot.sendMessage(msg.chat.id, `Current pH value: ${data[0].ph}`);
+  }
+});
+
+bot.onText(/\/ec/, async (msg) => {
+  const { data, error } = await supabase
+    .from('sensor_data')
+    .select('ec')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error || !data || data.length === 0) {
+    bot.sendMessage(msg.chat.id, "Could not fetch EC value.");
+  } else {
+    bot.sendMessage(msg.chat.id, `Current EC value: ${data[0].ec}`);
+  }
+});
+
+bot.onText(/\/temp/, async (msg) => {
+  const { data, error } = await supabase
+    .from('sensor_data')
+    .select('water_temperature')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error || !data || data.length === 0) {
+    bot.sendMessage(msg.chat.id, "Could not fetch water temperature.");
+  } else {
+    bot.sendMessage(msg.chat.id, `Current water temperature: ${data[0].water_temperature}°C`);
+  }
+});
+
+bot.onText(/\/plant/, async (msg) => {
+  const { data: plantProfiles, error } = await supabase
+    .from('plant_profiles')
+    .select('name, ph_min, ph_max, ec_min, ec_max');
+  if (error || !plantProfiles || plantProfiles.length === 0) {
+    bot.sendMessage(msg.chat.id, "Could not fetch plant profiles.");
+    return;
+  }
+  let message = "Plant Profiles and Optimum Ranges:\n\n";
+  plantProfiles.forEach(plant => {
+    message += `🌱 ${plant.name}\n`;
+    message += `  pH: ${plant.ph_min} - ${plant.ph_max}\n`;
+    message += `  EC: ${plant.ec_min} - ${plant.ec_max}\n\n`;
+  });
+  bot.sendMessage(msg.chat.id, message);
+});
+
+// Webhook endpoint for Telegram
+app.post('/webhook', (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+// Function to set webhook
+async function setWebhook() {
+  try {
+    const webhookUrl = `${process.env.RENDER_EXTERNAL_URL || 'https://your-backend-xyz.ondigitalocean.app'}/webhook`;
+    await bot.setWebHook(webhookUrl);
+    console.log('✅ Webhook set successfully:', webhookUrl);
+  } catch (error) {
+    console.error('❌ Failed to set webhook:', error);
+  }
+}
+
+// Set webhook when server starts
+setWebhook();
+
+// User CRUD Operations
+// Create user
+app.post('/api/users', async (req, res) => {
+  console.log('Creating user:', req.body);
+  const { email, password, role } = req.body;
+  try {
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+    });
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw authError;
+    }
+
+    // Create profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert([{
+        id: authData.user.id,
+        email,
+        role,
+      }]);
+    if (profileError) {
+      console.error('Profile error:', profileError);
+      throw profileError;
+    }
+
+    console.log('User created successfully:', authData.user.id);
+    res.json({ user: authData.user });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(400).json({ 
+      error: error.message,
+      details: error.details || 'Unknown error occurred'
+    });
+  }
+});
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  console.log('Fetching all users');
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+    
+    console.log(`Successfully fetched ${data.length} users`);
+    res.json(data);
+  } catch (error) {
+    console.error('Error in GET /api/users:', error);
+    res.status(400).json({ 
+      error: error.message,
+      details: error.details || 'Unknown error occurred'
+    });
+  }
+});
+
+// Update user
+app.put('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { email, password, role } = req.body;
+  console.log(`Updating user ${id}:`, req.body);
+  
+  try {
+    // Update auth user
+    const updateData = { email };
+    if (password) updateData.password = password;
+    
+    const { data: authData, error: authError } = await supabase.auth.admin.updateUserById(id, updateData);
+    if (authError) {
+      console.error('Auth update error:', authError);
+      throw authError;
+    }
+
+    // Update profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ email, role })
+      .eq('id', id);
+    if (profileError) {
+      console.error('Profile update error:', profileError);
+      throw profileError;
+    }
+
+    console.log('User updated successfully:', id);
+    res.json({ user: authData.user });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(400).json({ 
+      error: error.message,
+      details: error.details || 'Unknown error occurred'
+    });
+  }
+});
+
+// Delete user
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  console.log(`Deleting user ${id}`);
+  
+  try {
+    // Delete from auth
+    const { error: authError } = await supabase.auth.admin.deleteUser(id);
+    if (authError) {
+      console.error('Auth delete error:', authError);
+      throw authError;
+    }
+
+    // Delete from profiles
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', id);
+    if (profileError) {
+      console.error('Profile delete error:', profileError);
+      throw profileError;
+    }
+
+    console.log('User deleted successfully:', id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(400).json({ 
+      error: error.message,
+      details: error.details || 'Unknown error occurred'
+    });
+  }
+});
+
+// Plant CRUD Operations
+// Create plant
+app.post('/api/plants', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('plant_profiles')
+      .insert([req.body]);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get all plants
+app.get('/api/plants', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('plant_profiles')
+      .select('*')
+      .order('name', { ascending: true });
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update plant
+app.put('/api/plants/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase
+      .from('plant_profiles')
+      .update(req.body)
+      .eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete plant
+app.delete('/api/plants/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase
+      .from('plant_profiles')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Add health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
+  console.log('Supabase URL:', process.env.REACT_APP_SUPABASE_URL);
+  console.log('Telegram Bot Token:', process.env.TELEGRAM_BOT_TOKEN ? 'Configured' : 'Not configured');
+});
