@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 
 const NotificationContext = createContext();
 
@@ -6,6 +6,17 @@ export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
+
+  // Load notifications from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('notifications');
+    if (saved) setNotifications(JSON.parse(saved));
+  }, []);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   const addNotification = useCallback((message) => {
     const newNotification = {
