@@ -151,68 +151,137 @@ if (supabase) {
 }
 
 // Telegram Bot Commands
-bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Welcome to Hydroponic Monitoring Bot! This bot can show you the current values of Electrical Conductivity (EC), pH Level, Water Temperature and will send you alerts when any of the pump is activated. Oh, and it can also show you the optimised level for all plant profiles.");
+bot.onText(/\/start/, async (msg) => {
+  try {
+    await bot.sendMessage(msg.chat.id, "Welcome to Hydroponic Monitoring Bot! This bot can show you the current values of Electrical Conductivity (EC), pH Level, Water Temperature and will send you alerts when any of the pump is activated. Oh, and it can also show you the optimised level for all plant profiles.");
+    console.log('✅ /start command processed for chat:', msg.chat.id);
+  } catch (error) {
+    console.error('❌ Error processing /start command:', error);
+  }
 });
 
 bot.onText(/\/ph/, async (msg) => {
-  const { data, error } = await supabase
-    .from('sensor_data')
-    .select('ph')
-    .order('created_at', { ascending: false })
-    .limit(1);
-  if (error || !data || data.length === 0) {
-    bot.sendMessage(msg.chat.id, "Could not fetch pH value.");
-  } else {
-    bot.sendMessage(msg.chat.id, `Current pH value: ${data[0].ph}`);
+  try {
+    const { data, error } = await supabase
+      .from('sensor_data')
+      .select('ph')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) {
+      await bot.sendMessage(msg.chat.id, "Could not fetch pH value.");
+    } else {
+      await bot.sendMessage(msg.chat.id, `Current pH value: ${data[0].ph}`);
+    }
+    console.log('✅ /ph command processed for chat:', msg.chat.id);
+  } catch (error) {
+    console.error('❌ Error processing /ph command:', error);
+    try {
+      await bot.sendMessage(msg.chat.id, "Sorry, there was an error processing your request.");
+    } catch (sendError) {
+      console.error('❌ Error sending error message:', sendError);
+    }
   }
 });
 
 bot.onText(/\/ec/, async (msg) => {
-  const { data, error } = await supabase
-    .from('sensor_data')
-    .select('ec')
-    .order('created_at', { ascending: false })
-    .limit(1);
-  if (error || !data || data.length === 0) {
-    bot.sendMessage(msg.chat.id, "Could not fetch EC value.");
-  } else {
-    bot.sendMessage(msg.chat.id, `Current EC value: ${data[0].ec}`);
+  try {
+    const { data, error } = await supabase
+      .from('sensor_data')
+      .select('ec')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) {
+      await bot.sendMessage(msg.chat.id, "Could not fetch EC value.");
+    } else {
+      await bot.sendMessage(msg.chat.id, `Current EC value: ${data[0].ec}`);
+    }
+    console.log('✅ /ec command processed for chat:', msg.chat.id);
+  } catch (error) {
+    console.error('❌ Error processing /ec command:', error);
+    try {
+      await bot.sendMessage(msg.chat.id, "Sorry, there was an error processing your request.");
+    } catch (sendError) {
+      console.error('❌ Error sending error message:', sendError);
+    }
   }
 });
 
 bot.onText(/\/temp/, async (msg) => {
-  const { data, error } = await supabase
-    .from('sensor_data')
-    .select('water_temperature')
-    .order('created_at', { ascending: false })
-    .limit(1);
-  if (error || !data || data.length === 0) {
-    bot.sendMessage(msg.chat.id, "Could not fetch water temperature.");
-  } else {
-    bot.sendMessage(msg.chat.id, `Current water temperature: ${data[0].water_temperature}°C`);
+  try {
+    const { data, error } = await supabase
+      .from('sensor_data')
+      .select('water_temperature')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (error || !data || data.length === 0) {
+      await bot.sendMessage(msg.chat.id, "Could not fetch water temperature.");
+    } else {
+      await bot.sendMessage(msg.chat.id, `Current water temperature: ${data[0].water_temperature}°C`);
+    }
+    console.log('✅ /temp command processed for chat:', msg.chat.id);
+  } catch (error) {
+    console.error('❌ Error processing /temp command:', error);
+    try {
+      await bot.sendMessage(msg.chat.id, "Sorry, there was an error processing your request.");
+    } catch (sendError) {
+      console.error('❌ Error sending error message:', sendError);
+    }
   }
 });
 
 bot.onText(/\/plant/, async (msg) => {
-  const { data: plantProfiles, error } = await supabase
-    .from('plant_profiles')
-    .select('name, ph_min, ph_max, ec_min, ec_max');
-  if (error || !plantProfiles || plantProfiles.length === 0) {
-    bot.sendMessage(msg.chat.id, "Could not fetch plant profiles.");
-    return;
+  try {
+    const { data: plantProfiles, error } = await supabase
+      .from('plant_profiles')
+      .select('name, ph_min, ph_max, ec_min, ec_max');
+    if (error || !plantProfiles || plantProfiles.length === 0) {
+      await bot.sendMessage(msg.chat.id, "Could not fetch plant profiles.");
+      return;
+    }
+    let message = "Plant Profiles and Optimum Ranges:\n\n";
+    plantProfiles.forEach(plant => {
+      message += `🌱 ${plant.name}\n`;
+      message += `  pH: ${plant.ph_min} - ${plant.ph_max}\n`;
+      message += `  EC: ${plant.ec_min} - ${plant.ec_max}\n\n`;
+    });
+    await bot.sendMessage(msg.chat.id, message);
+    console.log('✅ /plant command processed for chat:', msg.chat.id);
+  } catch (error) {
+    console.error('❌ Error processing /plant command:', error);
+    try {
+      await bot.sendMessage(msg.chat.id, "Sorry, there was an error processing your request.");
+    } catch (sendError) {
+      console.error('❌ Error sending error message:', sendError);
+    }
   }
-  let message = "Plant Profiles and Optimum Ranges:\n\n";
-  plantProfiles.forEach(plant => {
-    message += `🌱 ${plant.name}\n`;
-    message += `  pH: ${plant.ph_min} - ${plant.ph_max}\n`;
-    message += `  EC: ${plant.ec_min} - ${plant.ec_max}\n\n`;
-  });
-  bot.sendMessage(msg.chat.id, message);
+});
+
+// General message handler for unknown commands
+bot.on('message', async (msg) => {
+  // Only respond to text messages that aren't commands
+  if (msg.text && !msg.text.startsWith('/')) {
+    try {
+      const helpMessage = `🤖 Hydroponic Monitoring Bot Commands:
+
+/start - Welcome message
+/ph - Get current pH value
+/ec - Get current EC value
+/temp - Get current water temperature
+/plant - Show plant profiles and optimum ranges
+
+Send any of these commands to get started!`;
+      
+      await bot.sendMessage(msg.chat.id, helpMessage);
+      console.log('✅ Help message sent for chat:', msg.chat.id);
+    } catch (error) {
+      console.error('❌ Error sending help message:', error);
+    }
+  }
 });
 
 // Webhook endpoint for Telegram
 app.post('/webhook', (req, res) => {
+  console.log('Webhook received:', req.body);
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
@@ -220,9 +289,17 @@ app.post('/webhook', (req, res) => {
 // Function to set webhook
 async function setWebhook() {
   try {
-    const webhookUrl = `https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend/webhook`;
+    // First, delete any existing webhook
+    await bot.deleteWebHook();
+    console.log('✅ Existing webhook deleted');
+    
+    const webhookUrl = `https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/webhook`;
     await bot.setWebHook(webhookUrl);
     console.log('✅ Webhook set successfully:', webhookUrl);
+    
+    // Get webhook info to verify
+    const webhookInfo = await bot.getWebhookInfo();
+    console.log('Webhook info:', webhookInfo);
   } catch (error) {
     console.error('❌ Failed to set webhook:', error);
   }
@@ -432,10 +509,35 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test endpoint to manually set webhook
+app.post('/api/set-webhook', async (req, res) => {
+  try {
+    await setWebhook();
+    res.json({ success: true, message: 'Webhook set successfully' });
+  } catch (error) {
+    console.error('Error setting webhook:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test endpoint to get webhook info
+app.get('/api/webhook-info', async (req, res) => {
+  try {
+    const webhookInfo = await bot.getWebhookInfo();
+    res.json(webhookInfo);
+  } catch (error) {
+    console.error('Error getting webhook info:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Environment:', process.env.NODE_ENV || 'development');
   console.log('Supabase URL:', process.env.REACT_APP_SUPABASE_URL);
   console.log('Telegram Bot Token:', process.env.TELEGRAM_BOT_TOKEN ? 'Configured' : 'Not configured');
+  
+  // Set the webhook only after the server has started listening
+  setWebhook();
 });
