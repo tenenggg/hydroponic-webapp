@@ -73,17 +73,17 @@ function Dashboard() {
           });
 
           // Check for pump state changes and send notifications
-          if (newStatus.pump1 && !prevPumpStatus.current.pump1) {
-            addNotification('Pump 1 (Solution A+B) was activated.');
+          if (newStatus.pump1) {
+            addNotification('Pump 1 (Solution A+B) is ON.');
           }
-          if (newStatus.pump2 && !prevPumpStatus.current.pump2) {
-            addNotification('Pump 2 (Water) was activated.');
+          if (newStatus.pump2) {
+            addNotification('Pump 2 (Water) is ON.');
           }
-          if (newStatus.pump3 && !prevPumpStatus.current.pump3) {
-            addNotification('Pump 3 (pH Up) was activated.');
+          if (newStatus.pump3) {
+            addNotification('Pump 3 (pH Up) is ON.');
           }
-          if (newStatus.pump4 && !prevPumpStatus.current.pump4) {
-            addNotification('Pump 4 (pH Down) was activated.');
+          if (newStatus.pump4) {
+            addNotification('Pump 4 (pH Down) is ON.');
           }
 
           // Update the ref for the next comparison
