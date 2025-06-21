@@ -19,46 +19,52 @@ function ManagePlants() {
   });
   const navigate = useNavigate();
 
-  // Fetch plants with React Query
-  const { data: plants = [], isLoading, error } = useQuery(['plants'], async () => {
-    const response = await fetch(`${BACKEND_URL}/api/plants`);
-    if (!response.ok) throw new Error('Failed to fetch plants');
-    return response.json();
+  // Fetch plants with React Query v5 object form
+  const { data: plants = [], isLoading, error } = useQuery({
+    queryKey: ['plants'],
+    queryFn: async () => {
+      const response = await fetch(`${BACKEND_URL}/api/plants`);
+      if (!response.ok) throw new Error('Failed to fetch plants');
+      return response.json();
+    }
   });
 
   // Mutations
-  const createPlant = useMutation(async (data) => {
-    const response = await fetch(`${BACKEND_URL}/api/plants`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to create plant');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  const createPlant = useMutation({
+    mutationFn: async (data) => {
+      const response = await fetch(`${BACKEND_URL}/api/plants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create plant');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plants'] })
   });
 
-  const updatePlant = useMutation(async ({ id, data }) => {
-    const response = await fetch(`${BACKEND_URL}/api/plants/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to update plant');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  const updatePlant = useMutation({
+    mutationFn: async ({ id, data }) => {
+      const response = await fetch(`${BACKEND_URL}/api/plants/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update plant');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plants'] })
   });
 
-  const deletePlant = useMutation(async (plantId) => {
-    const response = await fetch(`${BACKEND_URL}/api/plants/${plantId}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) throw new Error('Failed to delete plant');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  const deletePlant = useMutation({
+    mutationFn: async (plantId) => {
+      const response = await fetch(`${BACKEND_URL}/api/plants/${plantId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete plant');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plants'] })
   });
 
   const handleEdit = (plant) => {
