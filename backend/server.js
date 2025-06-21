@@ -519,6 +519,28 @@ app.delete('/api/plants/:id', async (req, res) => {
   }
 });
 
+// Sensor Data Operations
+app.delete('/api/sensor-data', async (req, res) => {
+  const { ids } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'An array of row IDs must be provided.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('sensor_data')
+      .delete()
+      .in('id', ids);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: `${ids.length} records deleted successfully.` });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete sensor data.', details: error.message });
+  }
+});
+
 // Add health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
