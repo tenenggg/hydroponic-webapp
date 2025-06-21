@@ -3,11 +3,14 @@ import { supabase } from '../supabaseClient';
 import { CSVLink } from 'react-csv';
 import Layout from './Layout';
 
+const BACKEND_URL = 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend';
+
 function RawDataView() {
   const [chartData, setChartData] = useState([]);
   const [plantName, setPlantName] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState([]);
   const itemsPerPage = 20;
 
   const getSelectedPlantData = useCallback(async () => {
@@ -77,26 +80,57 @@ function RawDataView() {
 
   // Handle page change
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
-  const handleDelete = async (rowId) => {
-    if (!window.confirm('Are you sure you want to delete this row? This action is permanent.')) {
+  const handleSelectRow = (id) => {
+    setSelectedRows(prev => 
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllOnPage = () => {
+    const currentPageIds = currentData.map(d => d.id);
+    const allOnPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedRows.includes(id));
+
+    if (allOnPageSelected) {
+      // Deselect all on current page
+      setSelectedRows(prev => prev.filter(id => !currentPageIds.includes(id)));
+    } else {
+      // Select all on current page
+      setSelectedRows(prev => [...new Set([...prev, ...currentPageIds])]);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRows.length === 0) {
+      alert('No rows selected to delete.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete the ${selectedRows.length} selected items? This action is permanent.`)) {
       return;
     }
     
     try {
-      const { error } = await supabase
-        .from('sensor_data')
-        .delete()
-        .eq('id', rowId);
+      const response = await fetch(`${BACKEND_URL}/api/sensor-data`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: selectedRows }),
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete data');
       }
 
-      // Refresh the data after successful deletion
-      getSelectedPlantData();
+      setSelectedRows([]);
+      await getSelectedPlantData();
+      alert('Selected rows have been deleted successfully.');
     } catch (error) {
       console.error('Error deleting data:', error);
       alert(`Failed to delete data: ${error.message}`);
@@ -117,7 +151,24 @@ function RawDataView() {
             <p className="text-lg text-green-200">Loading data...</p>
           ) : (
             <>
-              <div className="mb-4 flex justify-end">
+              <div className="mb-4 flex justify-end gap-4 items-center">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="select-all-on-page"
+                    onChange={handleSelectAllOnPage}
+                    checked={currentData.length > 0 && currentData.every(d => selectedRows.includes(d.id))}
+                    className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-green-500 focus:ring-green-400"
+                  />
+                  <label htmlFor="select-all-on-page" className="text-white font-medium">Select All</label>
+                </div>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={selectedRows.length === 0}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Delete Selected ({selectedRows.length})
+                </button>
                 <CSVLink 
                   data={currentData}
                   filename={`${plantName}_raw_data.csv`}
@@ -134,23 +185,23 @@ function RawDataView() {
                       <th className="px-4 py-2 text-left">Temperature (°C)</th>
                       <th className="px-4 py-2 text-left">pH</th>
                       <th className="px-4 py-2 text-left">EC (mS/cm)</th>
-                      <th className="px-4 py-2 text-left">Actions</th>
+                      <th className="px-4 py-2 text-center">Select</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentData.map((data, index) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-green-800 text-white' : 'bg-green-900 text-white'}>
+                    {currentData.map((data) => (
+                      <tr key={data.id} className={selectedRows.includes(data.id) ? 'bg-green-600' : (chartData.indexOf(data) % 2 === 0 ? 'bg-green-800' : 'bg-green-900')}>
                         <td className="px-4 py-2">{new Date(data.created_at).toLocaleString()}</td>
                         <td className="px-4 py-2">{data.water_temperature.toFixed(2)}</td>
                         <td className="px-4 py-2">{data.ph.toFixed(2)}</td>
                         <td className="px-4 py-2">{data.ec.toFixed(2)}</td>
-                        <td className="px-4 py-2">
-                          <button
-                            onClick={() => handleDelete(data.id)}
-                            className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                          >
-                            Delete
-                          </button>
+                        <td className="px-4 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.includes(data.id)}
+                            onChange={() => handleSelectRow(data.id)}
+                            className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-green-500 focus:ring-green-400"
+                          />
                         </td>
                       </tr>
                     ))}
