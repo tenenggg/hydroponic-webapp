@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import Layout from './Layout';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const BACKEND_URL = 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend';
 
 function ManagePlants() {
-  const [plants, setPlants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [editingPlant, setEditingPlant] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -20,22 +19,47 @@ function ManagePlants() {
   });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchPlants();
-  }, []);
+  // Fetch plants with React Query
+  const { data: plants = [], isLoading, error } = useQuery(['plants'], async () => {
+    const response = await fetch(`${BACKEND_URL}/api/plants`);
+    if (!response.ok) throw new Error('Failed to fetch plants');
+    return response.json();
+  });
 
-  const fetchPlants = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/plants`);
-      if (!response.ok) throw new Error('Failed to fetch plants');
-      const data = await response.json();
-      setPlants(data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mutations
+  const createPlant = useMutation(async (data) => {
+    const response = await fetch(`${BACKEND_URL}/api/plants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create plant');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  });
+
+  const updatePlant = useMutation(async ({ id, data }) => {
+    const response = await fetch(`${BACKEND_URL}/api/plants/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update plant');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  });
+
+  const deletePlant = useMutation(async (plantId) => {
+    const response = await fetch(`${BACKEND_URL}/api/plants/${plantId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete plant');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['plants'])
+  });
 
   const handleEdit = (plant) => {
     setEditingPlant(plant);
@@ -51,54 +75,29 @@ function ManagePlants() {
 
   const handleDelete = async (plantId) => {
     if (!window.confirm('Are you sure you want to delete this plant?')) return;
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/plants/${plantId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete plant');
-      fetchPlants();
-    } catch (error) {
-      setError(error.message);
-    }
+    deletePlant.mutate(plantId);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      if (editingPlant) {
-        const response = await fetch(`${BACKEND_URL}/api/plants/${editingPlant.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) throw new Error('Failed to update plant');
-      } else {
-        const response = await fetch(`${BACKEND_URL}/api/plants`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) throw new Error('Failed to create plant');
-      }
-
-      setEditingPlant(null);
-      setFormData({
-        name: '',
-        ph_min: '',
-        ph_max: '',
-        ec_min: '',
-        ec_max: '',
-        image_url: '',
-      });
-      fetchPlants();
-      navigate('/manage-plants');
-    } catch (error) {
-      setError(error.message);
+    if (editingPlant) {
+      updatePlant.mutate({ id: editingPlant.id, data: formData });
+    } else {
+      createPlant.mutate(formData);
     }
+    setEditingPlant(null);
+    setFormData({
+      name: '',
+      ph_min: '',
+      ph_max: '',
+      ec_min: '',
+      ec_max: '',
+      image_url: '',
+    });
+    navigate('/manage-plants');
   };
 
-  if (loading) return <div className="text-center mt-8 text-white">Loading...</div>;
+  if (isLoading) return <div className="text-center mt-8 text-white">Loading...</div>;
 
   return (
     <Layout>
@@ -110,7 +109,7 @@ function ManagePlants() {
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
+              {error.message}
             </div>
           )}
 
