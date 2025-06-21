@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import Layout from './Layout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,46 +14,52 @@ function ManageUsers() {
     role: 'user',
   });
 
-  // Fetch users with React Query
-  const { data: users = [], isLoading, error } = useQuery(['users'], async () => {
-    const response = await fetch(`${BACKEND_URL}/api/users`);
-    if (!response.ok) throw new Error('Failed to fetch users');
-    return response.json();
+  // Fetch users with React Query v5 object form
+  const { data: users = [], isLoading, error } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await fetch(`${BACKEND_URL}/api/users`);
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
+    }
   });
 
   // Mutations
-  const createUser = useMutation(async (data) => {
-    const response = await fetch(`${BACKEND_URL}/api/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to create user');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['users'])
+  const createUser = useMutation({
+    mutationFn: async (data) => {
+      const response = await fetch(`${BACKEND_URL}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to create user');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] })
   });
 
-  const updateUser = useMutation(async ({ id, data }) => {
-    const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to update user');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['users'])
+  const updateUser = useMutation({
+    mutationFn: async ({ id, data }) => {
+      const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update user');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] })
   });
 
-  const deleteUser = useMutation(async (userId) => {
-    const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) throw new Error('Failed to delete user');
-    return response.json();
-  }, {
-    onSuccess: () => queryClient.invalidateQueries(['users'])
+  const deleteUser = useMutation({
+    mutationFn: async (userId) => {
+      const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete user');
+      return response.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] })
   });
 
   const handleEdit = (user) => {
