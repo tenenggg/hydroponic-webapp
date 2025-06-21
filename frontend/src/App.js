@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import { NotificationProvider } from "./context/NotificationContext";
 import Dashboard from "./components/Dashboard";
 import ViewData from "./components/ViewData";
 import ViewOptimisedLevel from "./components/ViewOptimisedLevel";
@@ -45,87 +46,89 @@ function App() {
   return (
     <div className="App">
       <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+        <NotificationProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/view-data"
-            element={
-              <ProtectedRoute>
-                <ViewData />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/view-optimised-level"
-            element={
-              <ProtectedRoute>
-                <ViewOptimisedLevel />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/view-graph"
-            element={
-              <ProtectedRoute>
-                <ViewGraph />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/select-plant"
-            element={
-              <ProtectedRoute>
-                <SelectPlant />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/raw-data"
-            element={
-              <ProtectedRoute>
-                <RawDataView />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/view-data"
+              element={
+                <ProtectedRoute>
+                  <ViewData />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/view-optimised-level"
+              element={
+                <ProtectedRoute>
+                  <ViewOptimisedLevel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/view-graph"
+              element={
+                <ProtectedRoute>
+                  <ViewGraph />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/select-plant"
+              element={
+                <ProtectedRoute>
+                  <SelectPlant />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/raw-data"
+              element={
+                <ProtectedRoute>
+                  <RawDataView />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin-only Routes */}
-          <Route
-            path="/manage-users"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <ManageUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage-plants"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <ManagePlants />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+            {/* Admin-only Routes */}
+            <Route
+              path="/manage-users"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <ManageUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manage-plants"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <ManagePlants />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </NotificationProvider>
       </Router>
     </div>
   );
