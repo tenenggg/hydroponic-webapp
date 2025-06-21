@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaLeaf, FaFlask, FaChartLine, FaClock, FaUsers, FaUserCog, FaSeedling, FaSignOutAlt, FaTable, FaHome } from 'react-icons/fa';
+import { FaLeaf, FaFlask, FaChartLine, FaClock, FaUsers, FaUserCog, FaSeedling, FaSignOutAlt, FaTable, FaHome, FaBell, FaTrash } from 'react-icons/fa';
 import { supabase } from '../supabaseClient';
+import { useNotifications } from '../context/NotificationContext';
 
 const navConfig = [
   { label: 'Home', icon: FaHome, path: '/' },
@@ -24,6 +25,8 @@ function Layout({ children }) {
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [userRole, setUserRole] = useState(null);
+  const { notifications, removeNotification } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem('userRole');
@@ -88,7 +91,37 @@ function Layout({ children }) {
         {/* Header */}
         <header className={`fixed top-0 left-0 right-0 z-30 bg-green-800 px-8 py-4 flex items-center justify-between shadow ${NAVBAR_HEIGHT}`} style={{marginLeft: '112px', height: '80px'}}>
           <h1 className="text-3xl md:text-4xl font-bold text-white transition-colors duration-200">Hydroponic Monitoring</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
+            {/* Notifications Bell */}
+            <div className="relative">
+              <button onClick={() => setShowNotifications(!showNotifications)} className="text-white hover:text-gray-300">
+                <FaBell size={24} />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-green-950 border border-green-700 rounded-lg shadow-xl z-50">
+                  <div className="p-4 font-bold text-white border-b border-green-700">Notifications</div>
+                  <ul className="max-h-96 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.map(n => (
+                        <li key={n.id} className="flex items-center justify-between p-3 border-b border-green-800 hover:bg-green-900">
+                          <span className="text-sm text-gray-300">{n.message}</span>
+                          <button onClick={() => removeNotification(n.id)} className="text-gray-400 hover:text-white">
+                            <FaTrash size={14} />
+                          </button>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-4 text-center text-sm text-gray-400">No new notifications</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-white text-xl">
               <FaClock size={24} color="white" />
               <span>{currentTime}</span>
