@@ -25,7 +25,7 @@ function Layout({ children }) {
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [userRole, setUserRole] = useState(null);
-  const { notifications, removeNotification } = useNotifications();
+  const { notifications, removeNotification, clearAllNotifications } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
@@ -104,7 +104,18 @@ function Layout({ children }) {
               </button>
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-green-950 border border-green-700 rounded-lg shadow-xl z-50">
-                  <div className="p-4 font-bold text-white border-b border-green-700">Notifications</div>
+                  <div className="p-4 font-bold text-white border-b border-green-700 flex items-center justify-between">
+                    <span>Notifications</span>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAllNotifications}
+                        className="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded flex items-center gap-1"
+                        title="Delete All Notifications"
+                      >
+                        <FaTrash size={12} /> Delete All
+                      </button>
+                    )}
+                  </div>
                   <ul className="max-h-96 overflow-y-auto">
                     {notifications.length > 0 ? (
                       notifications.map(n => (
