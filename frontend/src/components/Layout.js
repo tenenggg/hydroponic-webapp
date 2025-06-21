@@ -108,9 +108,14 @@ function Layout({ children }) {
                   <ul className="max-h-96 overflow-y-auto">
                     {notifications.length > 0 ? (
                       notifications.map(n => (
-                        <li key={n.id} className="flex items-center justify-between p-3 border-b border-green-800 hover:bg-green-900">
-                          <span className="text-sm text-gray-300">{n.message}</span>
-                          <button onClick={() => removeNotification(n.id)} className="text-gray-400 hover:text-white">
+                        <li key={n.id} className="flex items-center justify-between p-3 border-b border-green-800 hover:bg-green-900 gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-300">{n.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {n.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </p>
+                          </div>
+                          <button onClick={() => removeNotification(n.id)} className="text-gray-400 hover:text-white flex-shrink-0">
                             <FaTrash size={14} />
                           </button>
                         </li>
