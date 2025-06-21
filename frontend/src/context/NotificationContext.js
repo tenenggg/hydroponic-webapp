@@ -21,10 +21,15 @@ export const NotificationProvider = ({ children }) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   const value = {
     notifications,
     addNotification,
     removeNotification,
+    clearAllNotifications,
   };
 
   return (
