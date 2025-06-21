@@ -13,8 +13,8 @@ export const NotificationProvider = ({ children }) => {
       message,
       createdAt: new Date(),
     };
-    // Add new notification and keep only the latest 10
-    setNotifications(prev => [newNotification, ...prev].slice(0, 10));
+    // Add new notification without a limit
+    setNotifications(prev => [newNotification, ...prev]);
   }, []);
 
   const removeNotification = useCallback((id) => {
