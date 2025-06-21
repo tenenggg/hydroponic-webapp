@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import Layout from './Layout';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const BACKEND_URL = 'https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend';
 
 function ManageUsers() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
@@ -15,22 +14,47 @@ function ManageUsers() {
     role: 'user',
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Fetch users with React Query
+  const { data: users = [], isLoading, error } = useQuery(['users'], async () => {
+    const response = await fetch(`${BACKEND_URL}/api/users`);
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return response.json();
+  });
 
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/users`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mutations
+  const createUser = useMutation(async (data) => {
+    const response = await fetch(`${BACKEND_URL}/api/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create user');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['users'])
+  });
+
+  const updateUser = useMutation(async ({ id, data }) => {
+    const response = await fetch(`${BACKEND_URL}/api/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update user');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['users'])
+  });
+
+  const deleteUser = useMutation(async (userId) => {
+    const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete user');
+    return response.json();
+  }, {
+    onSuccess: () => queryClient.invalidateQueries(['users'])
+  });
 
   const handleEdit = (user) => {
     setEditingUser(user);
@@ -43,46 +67,21 @@ function ManageUsers() {
 
   const handleDelete = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete user');
-      fetchUsers();
-    } catch (error) {
-      setError(error.message);
-    }
+    deleteUser.mutate(userId);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      if (editingUser) {
-        const response = await fetch(`${BACKEND_URL}/api/users/${editingUser.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) throw new Error('Failed to update user');
-      } else {
-        const response = await fetch(`${BACKEND_URL}/api/users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-        if (!response.ok) throw new Error('Failed to create user');
-      }
-
-      setEditingUser(null);
-      setFormData({ email: '', password: '', role: 'user' });
-      fetchUsers();
-    } catch (error) {
-      setError(error.message);
+    if (editingUser) {
+      updateUser.mutate({ id: editingUser.id, data: formData });
+    } else {
+      createUser.mutate(formData);
     }
+    setEditingUser(null);
+    setFormData({ email: '', password: '', role: 'user' });
   };
 
-  if (loading) return <div className="text-center mt-8 text-white">Loading...</div>;
+  if (isLoading) return <div className="text-center mt-8 text-white">Loading...</div>;
 
   return (
     <Layout>
@@ -94,7 +93,7 @@ function ManageUsers() {
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
+              {error.message}
             </div>
           )}
 
