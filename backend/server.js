@@ -316,7 +316,7 @@ async function setWebhook() {
     await bot.deleteWebHook();
     console.log('✅ Existing webhook deleted');
     
-    const webhookUrl = `https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend2/webhook`;
+    const webhookUrl = `https://automated-hydroponic-monitoring-o8eti.ondigitalocean.app/hydroponic-webapp-backend/webhook`;
     await bot.setWebHook(webhookUrl);
     console.log('✅ Webhook set successfully:', webhookUrl);
   } catch (error) {
