@@ -29,9 +29,9 @@ function ViewGraph() {
   // Check if value is out of range
   const isOutOfRange = (value, type) => {
     const ranges = {
-      temperature: { min: 18, max: 30 },
-      ph: { min: 5.5, max: 7.5 },
-      ec: { min: 1.0, max: 3.0 }
+      temperature: { min: 20, max: 40 },
+      ph: { min: 5.0, max: 7.5 },
+      ec: { min: 0.5, max: 4.0 }
     };
     return value < ranges[type].min || value > ranges[type].max;
   };
