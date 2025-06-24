@@ -15,6 +15,7 @@ const navConfig = [
   { label: 'View Graph', icon: FaChartLine, path: '/view-graph' },
   { label: 'Select Plant', icon: FaLeaf, path: '/select-plant' },
   { label: 'Raw Data', icon: FaTable, path: '/raw-data' },
+  { label: 'Multiplant Range', icon: FaLayerGroup, path: '/multiplant-selector' },
 ];
 
 // Additional navigation items for admin users
@@ -22,7 +23,6 @@ const navConfig = [
 const adminNavConfig = [
   { label: 'Manage Users', icon: FaUsers, path: '/manage-users' },
   { label: 'Manage Plants', icon: FaSeedling, path: '/manage-plants' },
-  { label: 'Multiplant Range', icon: FaLayerGroup, path: '/multiplant-selector' },
 ];
 
 // Constants for layout dimensions
