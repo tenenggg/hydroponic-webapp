@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');  // Import Express framework
 // Express is used to create the server and handle HTTP requests and responses
-
+const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const TelegramBot = require('node-telegram-bot-api');
 const https = require('https');
