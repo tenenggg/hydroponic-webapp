@@ -26,23 +26,10 @@ function ManagePlants() {
   const { data: plants = [], isLoading, error } = useQuery({
     queryKey: ['plants'],
     queryFn: async () => {
-      // Fetch regular plants
+      // Fetch all plants (including multiplant) from backend only
       const response = await fetch(`${BACKEND_URL}/api/plants`);
       if (!response.ok) throw new Error('Failed to fetch plants');
-      const regularPlants = await response.json();
-
-      // Fetch multiplant profile from Supabase directly
-      const { data: multiplantData, error: multiplantError } = await supabase
-        .from('multiplant_profile')
-        .select('*');
-
-      if (multiplantError) {
-        console.error('Failed to fetch multiplant:', multiplantError);
-        return regularPlants;
-      }
-
-      // Combine both sets of plants
-      return [...regularPlants, ...(multiplantData || [])];
+      return response.json();
     }
   });
 
@@ -344,18 +331,22 @@ function ManagePlants() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(plant)}                // Set the plant to be edited
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(plant.id)}              //  Call the delete function with the plant's ID
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <FaTrash />
-                        </button>
+                        {plant.name !== "Multiplant" && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(plant)}                // Set the plant to be edited
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(plant.id)}              //  Call the delete function with the plant's ID
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
