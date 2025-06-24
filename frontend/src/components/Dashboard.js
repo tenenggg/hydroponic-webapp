@@ -129,12 +129,13 @@ function Dashboard() {
     { label: 'View Graph', icon: <FaChartLine size={24} color="white" />, onClick: () => navigate('/view-graph') },
     { label: 'Select Plant', icon: <FaLeaf size={24} color="white" />, onClick: () => navigate('/select-plant') },
     { label: 'Raw Data', icon: <FaTable size={24} color="white" />, onClick: () => navigate('/raw-data') },
+    { label: 'Multiplant Range', icon: <FaLayerGroup size={24} color="white" />, onClick: () => navigate('/multiplant-selector') },
   ];
   if (userRole === 'admin') { // If the user is an admin, add additional navigation items
     navItems.push(
       { label: 'Manage Users', icon: <FaUsers size={24} color="white" />, onClick: () => navigate('/manage-users') },
       { label: 'Manage Plants', icon: <FaSeedling size={24} color="white" />, onClick: () => navigate('/manage-plants') },
-      { label: 'Multiplant Range', icon: <FaLayerGroup size={24} color="white" />, onClick: () => navigate('/multiplant-selector') }
+      
     );
   }
 
@@ -147,12 +148,13 @@ function Dashboard() {
     { label: 'View Graph', icon: <FaChartLine size={48} color="white" />, onClick: () => navigate('/view-graph') },
     { label: 'Select Plant', icon: <FaLeaf size={48} color="white" />, onClick: () => navigate('/select-plant') },
     { label: 'Raw Data', icon: <FaTable size={48} color="white" />, onClick: () => navigate('/raw-data') },
+    { label: 'Multiplant Range', icon: <FaLayerGroup size={48} color="white" />, onClick: () => navigate('/multiplant-selector') },
   ];
   if (userRole === 'admin') { // If the user is an admin, add additional feature cards
     featureCards.push(
       { label: 'Manage Users', icon: <FaUsers size={48} color="white" />, onClick: () => navigate('/manage-users') },
       { label: 'Manage Plants', icon: <FaSeedling size={48} color="white" />, onClick: () => navigate('/manage-plants') },
-      { label: 'Multiplant Range', icon: <FaLayerGroup size={48} color="white" />, onClick: () => navigate('/multiplant-selector') }
+      
     );
   }
 
