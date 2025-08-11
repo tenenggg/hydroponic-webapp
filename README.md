@@ -706,8 +706,8 @@ void loop() {
 ## 📹 Demonstration Video
 
 🎥 **Watch the system in action on YouTube:**  
-[![Demo Video](https://img.youtube.com/vi/https://youtu.be/VKwoa2XDkek?si=tYG3BT4Vdj-jeKH4/0.jpg)](https://youtu.be/VKwoa2XDkek?si=tYG3BT4Vdj-jeKH4)  
-*(Click the thumbnail to watch)*
+[![IoT Enabled Web-Based Hydroponic System](https://img.youtube.com/vi/VKwoa2XDkek/0.jpg)](https://youtu.be/VKwoa2XDkek)  
+*(Click the thumbnail to view on YouTube)*
 
 ---
 
