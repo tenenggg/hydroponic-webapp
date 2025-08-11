@@ -22,7 +22,7 @@ A full-stack IoT system designed for real-time monitoring and automated control 
 
 ## 🧠 System Architecture
 
-![image alt](architecture_diagram.png)
+![image alt](system_architecture_diagram.png)
 
 ---
 
