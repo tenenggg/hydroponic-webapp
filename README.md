@@ -22,7 +22,7 @@ A full-stack IoT system designed for real-time monitoring and automated control 
 
 ## 🧠 System Architecture
 
-![image alt](system_architecture_diagram.png)
+![image alt](system architecture diagram.png)
 
 ---
 
@@ -95,7 +95,7 @@ Pumps are triggered for 3 seconds and turned off to avoid over-correction.
 ---
 
 ## 📐 Circuit Diagram
-![image alt](circuit_image.png)
+![image alt](circuit image.png) 
 
 
 ---
