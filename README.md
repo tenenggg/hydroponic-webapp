@@ -701,6 +701,14 @@ void loop() {
 | pH < ph_min   | Pump 3      |
 | pH > ph_max   | Pump 4      |
 
+------
+
+## 📹 Demonstration Video
+
+🎥 **Watch the system in action on YouTube:**  
+[![Demo Video](https://img.youtube.com/vi/https://youtu.be/VKwoa2XDkek?si=tYG3BT4Vdj-jeKH4/0.jpg)](https://youtu.be/VKwoa2XDkek?si=tYG3BT4Vdj-jeKH4)  
+*(Click the thumbnail to watch)*
+
 ---
 
 ## ⚠️ Security & Best Practices
