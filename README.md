@@ -26,34 +26,6 @@ A full-stack IoT system designed for real-time monitoring and automated control 
 
 ---
 
-## 📷 Demo
-
-![image alt](register.jpg)
-
-Register Page
-
-![image alt](login.jpg)
-
-Login Page
-
-![image alt](user_dashboard.jpg)
-
-User Dashboard
-
-![image alt](admin_dashboard.jpg)
-
-Admin Dashboard
-
-![image alt](telesample1.jpeg)
-
-Telegram Bot Check And Notify
-
-![image alt](telesample2.jpeg)
-
-Telegram Bot Commands
-
----
-
 ## 🔧 Hardware Requirements
 
 | Component          | Description                            |
@@ -119,12 +91,6 @@ Link your bot to backend logic to respond to pH/EC commands and send threshold a
 | EC > ec\_max | Activate Pump 4 |
 
 Pumps are triggered for 3 seconds and turned off to avoid over-correction.
-
----
-
-## 📁 Folder Structure
-![image alt](folder_structure.jpeg)
-
 
 ---
 
